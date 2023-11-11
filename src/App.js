@@ -8,7 +8,7 @@ import Menu from "./components/menu/Menu";
 
 function App() {
     return (
-        <div>
+        <div id="main_content">
             <Menu/>
             <Routes>
                 <Route path="/" element={<Main/>} />
@@ -17,5 +17,6 @@ function App() {
 
     );
 }
+
 
 export default App;
