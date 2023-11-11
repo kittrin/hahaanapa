@@ -1,106 +1,35 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { WebRTCAdaptor } from '@antmedia/webrtc_adaptor';
+import React, { useState} from 'react';
 
 const PublishingComponent = () => {
-    const [publishing, setPublishing] = useState(false);
-    const [websocketConnected, setWebsocketConnected] = useState(false);
-    const [streamId, setStreamId] = useState('stream123');
-    const webRTCAdaptor = useRef(null);
-    var publishedStreamId = useRef(null);
+    const [currentTime, setCurrentTime] = useState(0)
+    const [videoSrc, setVideoSrc] = useState();
+    function updateFrameTime() {
+        // setCurrentTime(new Date().toLocaleTimeString());
+    }
 
-    const handlePublish = () => {
-        setPublishing(true);
-        webRTCAdaptor.current.publish(streamId);
-        publishedStreamId.current=streamId
 
-    };
+    // Обработка ошибок при загрузке видео
+    function handleVideoError() {
+        console.error("Error loading video");
+        alert("Error loading video. Please try again later.");
+    }
+    // Обработка события завершения загрузки кадра
+    function handleFrameLoaded() {
+        updateFrameTime();
+        // Загрузка следующего кадра
+        setTimeout(function() {
+            document.getElementById("videoPlayer").src = 'http://localhost:5000/video_feed?' + new Date().getTime();
+        }, 1000); // Set a delay of 1 second before loading the next frame
+    }
 
-    const handleStopPublishing = () => {
-        setPublishing(false);
-        webRTCAdaptor.current.stop(publishedStreamId.current);
-    };
-
-    const handleStreamIdChange = (event) => {
-        setStreamId(event.target.value);
-    };
-
-    useEffect(() => {
-        if(webRTCAdaptor.current === undefined || webRTCAdaptor.current === null){
-            webRTCAdaptor.current = new WebRTCAdaptor({
-                websocket_url: 'wss://test.antmedia.io:/WebRTCAppEE/websocket',
-                mediaConstraints: {
-                    video: true,
-                    audio: true,
-                },
-                peerconnection_config: {
-                    iceServers: [{ urls: 'stun:stun1.l.google.com:19302' }],
-                },
-                sdp_constraints: {
-                    OfferToReceiveAudio: false,
-                    OfferToReceiveVideo: false,
-                },
-                localVideoId: 'localVideo',
-                dataChannelEnabled: true,
-                callback: (info, obj) => {
-                    if (info === 'initialized') {
-                        setWebsocketConnected(true);
-                    }
-                    console.log(info, obj);
-                },
-                callbackError: function (error, message) {
-                    console.log(error, message);
-                },
-            });
-        }
-    }, []);
-
+    // Запуск загрузки первого кадра
+    handleFrameLoaded();
     return (
-        <div className="text-center">
-            <h1>Publish Page</h1>
-
-            <div className="mb-4">
-                <div>
-                    <video
-                        id="localVideo"
-                        controls
-                        autoPlay
-                        muted
-                        style={{
-                            width: '40vw',
-                            height: '60vh',
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                        }}
-                    ></video>
-                </div>
-            </div>
-            <div className="justify-content-center">
-                <div>
-                    <div className="mb-3">
-                        <input
-                            className="form-control form-control-lg"
-                            type="text"
-                            defaultValue={streamId}
-                            onChange={handleStreamIdChange}
-                        />
-                        <label className="form-label" htmlFor="streamId">
-                            Enter Stream Id
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    {!publishing ? (
-                        <button disabled={!websocketConnected} onClick={handlePublish}>
-                            Start Publishing
-                        </button>
-                    ) : (
-                        <button onClick={handleStopPublishing}>
-                            Stop Publishing
-                        </button>
-                    )}
-                </div>
-            </div>
+        <div>
+            <img id="videoPlayer" width="640" height="480" onError={handleVideoError} onLoad={handleFrameLoaded} alt={""}/>
+                <span id="frameTime">{currentTime}</span>
         </div>
+
     );
 };
 
